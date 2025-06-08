@@ -1,81 +1,59 @@
-import { useEffect, useState } from "react";
-import type { Movie } from "../../types/movie";
-import { fetchMovies } from "../../services/movieService";
-import SearchBar from "../SearchBar";
-import MovieGrid from "../MovieGrid";
-import Loader from "../Loader";
-import ErrorMessage from "../ErrorMessage";
-import MovieModal from "../MovieModal";
-
+import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import SearchBar from "../SearchBar/SearchBar";
+import MovieGrid from "../MovieGrid/MovieGrid";
+import { fetchMovies } from "../../services/movieService.ts";
+import type { Movie } from "../../types/movie.ts";
+import Loader from "../Loader/Loader.tsx";
+import ErrorMessage from "../ErrorMessage/ErrorMessage.tsx";
+import MovieModal from "../MovieModal/MovieModal.tsx";
 
-const App = () => {
-  const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+export default function App() {
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const notifyError = () =>
+    toast.error("No movies found for your request.", {
+      style: { background: "rgba(125, 183, 255, 0.8)" },
+      icon: "ℹ️",
+    });
 
-  useEffect(() => {
-    if (!query.trim()) return;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(false);
-        setMovies([]);
-
-        const results = await fetchMovies(query, page);
-
-        if (results.length === 0) {
-          toast("No movies found for your request.");
-        }
-
-        setMovies(results);
-      } catch (err) {
-        setError(true);
-        toast.error("Something went wrong!");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [query, page]);
-
-  const handleSearch = (formData: FormData) => {
-    const newQuery = formData.get("query")?.toString().trim() || "";
-    if (!newQuery) {
-      toast.error("Please enter your search query.");
-      return;
-    }
-    setQuery(newQuery);
-    setPage(1);
+  const openModal = (movies: Movie) => {
+    setSelectedMovie(movies);
   };
 
-  const handleSelect = (movie: Movie) => {
-    setSelectedMovie(movie);
-  };
-
-  const handleCloseModal = () => {
+  const closeModal = () => {
     setSelectedMovie(null);
   };
 
-  const shouldShowGrid = !loading && !error && movies.length > 0;
+  const handleSearch = async (newQuery: string) => {
+    try {
+      setIsLoading(true);
+      setError(false);
+      const newMovies = await fetchMovies(newQuery);
+      if (newMovies.length === 0) {
+        notifyError();
+      }
 
+      setMovies(newMovies);
+    } catch {
+      setError(true);
+      setMovies([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
-    <div>
-      <SearchBar action={handleSearch} />
+    <>
+      <SearchBar onSubmit={handleSearch} />
       <Toaster />
-      {loading && <Loader />}
+      {isLoading && <Loader />}
       {error && <ErrorMessage />}
-      {shouldShowGrid && <MovieGrid movies={movies} onSelect={handleSelect} />}
-      {selectedMovie && (
-        <MovieModal movie={selectedMovie} onClose={handleCloseModal} />
+      {movies.length > 0 && <MovieGrid onSelect={openModal} movies={movies} />}
+      {selectedMovie !== null && (
+        <MovieModal onClose={closeModal} movie={selectedMovie} />
       )}
-    </div>
+    </>
   );
-};
-
-export default App;
+}

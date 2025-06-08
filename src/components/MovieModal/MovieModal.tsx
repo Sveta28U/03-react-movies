@@ -1,55 +1,47 @@
-import { useEffect } from "react";
+import css from "./MovieModal.module.css";
 import { createPortal } from "react-dom";
 import type { Movie } from "../../types/movie";
-import styles from "./MovieModal.module.css";
+import { useEffect } from "react";
 
 interface MovieModalProps {
-  movie: Movie;
+  movie: Movie | null;
   onClose: () => void;
 }
 
-const modalRoot = document.getElementById("modal-root") as HTMLElement;
-
 export default function MovieModal({ movie, onClose }: MovieModalProps) {
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
         onClose();
       }
     };
 
-    const handleBodyOverflow = () => {
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = "auto";
-      };
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    const cleanup = handleBodyOverflow();
-
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      cleanup();
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
     };
   }, [onClose]);
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.currentTarget === e.target) {
+  const handleBackdropClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
       onClose();
     }
   };
-
+  if (!movie) {
+    return null;
+  }
   return createPortal(
     <div
-      className={styles.backdrop}
+      className={css.backdrop}
+      onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
-      onClick={handleBackdropClick}
     >
-      <div className={styles.modal}>
+      <div className={css.modal}>
         <button
-          className={styles.closeButton}
+          className={css.closeButton}
           aria-label="Close modal"
           onClick={onClose}
         >
@@ -58,20 +50,20 @@ export default function MovieModal({ movie, onClose }: MovieModalProps) {
         <img
           src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`}
           alt={movie.title}
-          className={styles.image}
+          className={css.image}
         />
-        <div className={styles.content}>
+        <div className={css.content}>
           <h2>{movie.title}</h2>
           <p>{movie.overview}</p>
           <p>
             <strong>Release Date:</strong> {movie.release_date}
           </p>
           <p>
-            <strong>Rating:</strong> {movie.vote_average}/10
+            <strong>Rating:</strong> {movie.vote_average}
           </p>
         </div>
       </div>
     </div>,
-    modalRoot
+    document.body
   );
 }
