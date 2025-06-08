@@ -16,7 +16,7 @@ export default function SearchBar({ onSubmit }: SearchBarProps) {
   };
   const notifyError = () =>
     toast.error("Please enter your search query.", {
-      style: { background: "rgba(244, 129, 130, 0.8)" },
+      style: { background: "rgba(180, 26, 72, 0.8)" },
     });
   return (
     <header className={css.header}>

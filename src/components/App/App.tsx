@@ -15,7 +15,7 @@ export default function App() {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const notifyError = () =>
     toast.error("No movies found for your request.", {
-      style: { background: "rgba(125, 183, 255, 0.8)" },
+      style: { background: "rgba(76, 231, 115, 0.8)" },
       icon: "ℹ️",
     });
 
